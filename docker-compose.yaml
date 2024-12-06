@@ -1,0 +1,46 @@
+services:
+  cardano-node-bp:
+    image: ghcr.io/blinklabs-io/cardano-node
+    container_name: cardano-node-bp
+    restart: unless-stopped
+    environment:
+      - CARDANO_BLOCK_PRODUCER=false
+      - RESTORE_SNAPSHOT=false
+      - CARDANO_SHELLEY_KES_KEY=/opt/cardano/config/keys/kes.skey
+      - CARDANO_SHELLEY_OPERATIONAL_CERTIFICATE=/opt/cardano/config/keys/node.cert
+      - CARDANO_SHELLEY_VRF_KEY=/opt/cardano/config/keys/vrf.skey
+    volumes:
+      - ./cardano-bp/node-keys:/opt/cardano/config/keys
+      - ./cardano-bp/node-db:/opt/cardano/data
+      - ./cardano-bp/node-ipc:/opt/cardano/ipc
+    ports:
+      - "3001:3001"
+      - "12798:12798"
+    command: run
+    networks:
+      - cardano-net
+
+  cardano-node-relay:
+    image: ghcr.io/blinklabs-io/cardano-node
+    container_name: cardano-node-relay
+    restart: unless-stopped
+    environment:
+      - CARDANO_BLOCK_PRODUCER=false
+      - RESTORE_SNAPSHOT=false
+      - CARDANO_SHELLEY_KES_KEY=/opt/cardano/config/keys/kes.skey
+      - CARDANO_SHELLEY_OPERATIONAL_CERTIFICATE=/opt/cardano/config/keys/node.cert
+      - CARDANO_SHELLEY_VRF_KEY=/opt/cardano/config/keys/vrf.skey
+    volumes:
+      - ./cardano-relay/node-keys:/opt/cardano/config/keys
+      - ./cardano-relay/node-db:/opt/cardano/data
+      - ./cardano-relay/node-ipc:/opt/cardano/ipc
+    ports:
+      - "3002:3001"
+      - "12799:12798"
+    command: run
+    networks:
+      - cardano-net
+
+networks:
+  cardano-net:
+    driver: bridge
