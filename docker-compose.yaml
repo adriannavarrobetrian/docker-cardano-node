@@ -1,46 +1,96 @@
+volumes:
+  cardano-data: {} 
+  db-sync-data: {}
+  postgres-data: {}
+  ogmios-data: {}
+  kupo-data: {}
+
 services:
-  cardano-node-bp:
-    image: ghcr.io/blinklabs-io/cardano-node
-    container_name: cardano-node-bp
+  # cardano-node:
+  #   image: ghcr.io/intersectmbo/cardano-node:10.1.2
+  #   restart: unless-stopped
+  #   container_name: cardano-node
+  #   ports:
+  #     - "3001:3001"
+  #   environment:
+  #     - NETWORK=preview
+  #     - CARDANO_NODE_SOCKET_PATH=/ipc/node.socket
+  #   volumes:
+  #     - ${HOME_IPC}:/ipc   # Use ${HOME_IPC} from .env
+  #     - $CARDANO_DATA_DIR:/data
+
+  postgres:
+    image: postgres:15.5
+    container_name: db-sync-postgres
+    environment:
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=cexplorer
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db-sync:
+    image: ghcr.io/intersectmbo/cardano-db-sync:13.5.0.2
+    container_name: db-sync
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - NETWORK=preview
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=cexplorer
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password123
+    volumes:
+      - /home/ubuntu/docker-cardano-node/ipc:/node-ipc  # Use ${HOME_IPC} from .env
+      - db-sync-data:/var/lib
+
+  ogmios:
+    image: cardanosolutions/ogmios:v6.8.0
+    container_name: ogmios
     restart: unless-stopped
     environment:
-      - CARDANO_BLOCK_PRODUCER=false
-      - RESTORE_SNAPSHOT=false
-      - CARDANO_SHELLEY_KES_KEY=/opt/cardano/config/keys/kes.skey
-      - CARDANO_SHELLEY_OPERATIONAL_CERTIFICATE=/opt/cardano/config/keys/node.cert
-      - CARDANO_SHELLEY_VRF_KEY=/opt/cardano/config/keys/vrf.skey
-    volumes:
-      - ./cardano-bp/node-keys:/opt/cardano/config/keys
-      - ./cardano-bp/node-db:/opt/cardano/data
-      - ./cardano-bp/node-ipc:/opt/cardano/ipc
+      - DATA_DIR=/data
     ports:
-      - "3001:3001"
-      - "12798:12798"
-    command: run
-    networks:
-      - cardano-net
-
-  cardano-node-relay:
-    image: ghcr.io/blinklabs-io/cardano-node
-    container_name: cardano-node-relay
-    restart: unless-stopped
-    environment:
-      - CARDANO_BLOCK_PRODUCER=false
-      - RESTORE_SNAPSHOT=false
-      - CARDANO_SHELLEY_KES_KEY=/opt/cardano/config/keys/kes.skey
-      - CARDANO_SHELLEY_OPERATIONAL_CERTIFICATE=/opt/cardano/config/keys/node.cert
-      - CARDANO_SHELLEY_VRF_KEY=/opt/cardano/config/keys/vrf.skey
+      - "1337:1337"
     volumes:
-      - ./cardano-relay/node-keys:/opt/cardano/config/keys
-      - ./cardano-relay/node-db:/opt/cardano/data
-      - ./cardano-relay/node-ipc:/opt/cardano/ipc
-    ports:
-      - "3002:3001"
-      - "12799:12798"
-    command: run
-    networks:
-      - cardano-net
+      - /home/ubuntu/docker-cardano-node/ipc:/ipc  # Use ${HOME_IPC} from .env
+      - ogmios-data:/data
+    command:
+      - --node-socket
+      - /ipc/socket
+      - --node-config
+      - /config/preview/cardano-node/config.json
+      - --host
+      - 0.0.0.0
 
-networks:
-  cardano-net:
-    driver: bridge
+  kupo:
+    image: cardanosolutions/kupo:v2.9.0
+    container_name: kupo
+    command:
+      - --ogmios-host
+      - ogmios  # Assuming 'ogmios' is the service name in your docker-compose network
+      - --ogmios-port
+      - "1337"
+      - --workdir
+      - /db
+      - --match
+      - "*"
+      - --since
+      - "origin"
+    ports:
+      - "1442:1442"
+    volumes:
+      - kupo-data:/db
+      - /home/ubuntu/docker-cardano-node/ipc:/ipc  # Use ${HOME_IPC} from .env
+      - ./cardano-config/preview:/config/preview
+    depends_on:
+      - ogmios  # Ensure Ogmios starts before Kupo
