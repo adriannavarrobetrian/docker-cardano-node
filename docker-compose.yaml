@@ -6,6 +6,27 @@ volumes:
   kupo-data: {}
 
 services:
+  cardano-node-bp:
+    image: ghcr.io/blinklabs-io/cardano-node
+    container_name: cardano-node-bp
+    restart: unless-stopped
+    environment:
+      - CARDANO_NETWORK=preview
+      - RESTORE_SNAPSHOT=false
+      - CARDANO_BLOCK_PRODUCER=true
+      - GENESIS_VERIFICATION_KEY=/opt/cardano/config/preview/genesis.vkey
+      - CARDANO_SHELLEY_KES_KEY=/opt/cardano/config/preview/keys/kes.skey
+      - CARDANO_SHELLEY_OPERATIONAL_CERTIFICATE=/opt/cardano/config/preview/keys/node.cert
+      - CARDANO_SHELLEY_VRF_KEY=/opt/cardano/config/preview/keys/vrf.skey
+    volumes:
+      - /tmp/docker-cardano-node/node-db:/opt/cardano/data
+      - /tmp/docker-cardano-node/ipc:/opt/cardano/ipc
+      - /home/ubuntu/docker-cardano-node/config:/opt/cardano/config
+      - /home/ubuntu/partner-chain-deps-docker:/opt/cardano/partner-chain-deps-docker
+    ports:
+      - "3001:3001"
+      - "12798:12798"
+    command: run
   # cardano-node:
   #   image: ghcr.io/intersectmbo/cardano-node:10.1.2
   #   restart: unless-stopped
@@ -19,78 +40,78 @@ services:
   #     - ${HOME_IPC}:/ipc   # Use ${HOME_IPC} from .env
   #     - $CARDANO_DATA_DIR:/data
 
-  postgres:
-    image: postgres:15.5
-    container_name: db-sync-postgres
-    environment:
-      - POSTGRES_PASSWORD=password123
-      - POSTGRES_DB=cexplorer
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+  # postgres:
+  #   image: postgres:15.5
+  #   container_name: db-sync-postgres
+  #   environment:
+  #     - POSTGRES_PASSWORD=password123
+  #     - POSTGRES_DB=cexplorer
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
 
-  db-sync:
-    image: ghcr.io/intersectmbo/cardano-db-sync:13.5.0.2
-    container_name: db-sync
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - NETWORK=preview
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=cexplorer
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password123
-    volumes:
-      - /home/ubuntu/docker-cardano-node/ipc:/node-ipc  # Use ${HOME_IPC} from .env
-      - db-sync-data:/var/lib
+  # db-sync:
+  #   image: ghcr.io/intersectmbo/cardano-db-sync:13.5.0.2
+  #   container_name: db-sync
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   environment:
+  #     - NETWORK=preview
+  #     - POSTGRES_HOST=postgres
+  #     - POSTGRES_PORT=5432
+  #     - POSTGRES_DB=cexplorer
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=password123
+  #   volumes:
+  #     - /tmp/docker-cardano-node/ipc:/node-ipc  # Use ${HOME_IPC} from .env
+  #     - db-sync-data:/var/lib
 
-  ogmios:
-    image: cardanosolutions/ogmios:v6.8.0
-    container_name: ogmios
-    restart: unless-stopped
-    environment:
-      - DATA_DIR=/data
-    ports:
-      - "1337:1337"
-    volumes:
-      - /home/ubuntu/docker-cardano-node/ipc:/ipc  # Use ${HOME_IPC} from .env
-      - ogmios-data:/data
-    command:
-      - --node-socket
-      - /ipc/socket
-      - --node-config
-      - /config/preview/cardano-node/config.json
-      - --host
-      - 0.0.0.0
+  # ogmios:
+  #   image: cardanosolutions/ogmios:v6.8.0
+  #   container_name: ogmios
+  #   restart: unless-stopped
+  #   environment:
+  #     - DATA_DIR=/data
+  #   ports:
+  #     - "1337:1337"
+  #   volumes:
+  #     - /tmp/docker-cardano-node/ipc:/ipc  # Use ${HOME_IPC} from .env
+  #     - ogmios-data:/data
+  #   command:
+  #     - --node-socket
+  #     - /ipc/socket
+  #     - --node-config
+  #     - /config/preview/cardano-node/config.json
+  #     - --host
+  #     - 0.0.0.0
 
-  kupo:
-    image: cardanosolutions/kupo:v2.9.0
-    container_name: kupo
-    command:
-      - --ogmios-host
-      - ogmios  # Assuming 'ogmios' is the service name in your docker-compose network
-      - --ogmios-port
-      - "1337"
-      - --workdir
-      - /db
-      - --match
-      - "*"
-      - --since
-      - "origin"
-    ports:
-      - "1442:1442"
-    volumes:
-      - kupo-data:/db
-      - /home/ubuntu/docker-cardano-node/ipc:/ipc  # Use ${HOME_IPC} from .env
-      - ./cardano-config/preview:/config/preview
-    depends_on:
-      - ogmios  # Ensure Ogmios starts before Kupo
+  # kupo:
+  #   image: cardanosolutions/kupo:v2.9.0
+  #   container_name: kupo
+  #   command:
+  #     - --ogmios-host
+  #     - ogmios  # Assuming 'ogmios' is the service name in your docker-compose network
+  #     - --ogmios-port
+  #     - "1337"
+  #     - --workdir
+  #     - /db
+  #     - --match
+  #     - "*"
+  #     - --since
+  #     - "origin"
+  #   ports:
+  #     - "1442:1442"
+  #   volumes:
+  #     - kupo-data:/db
+  #     - /tmp/docker-cardano-node/ipc:/ipc  # Use ${HOME_IPC} from .env
+  #     - /home/ubuntu/docker-cardano-node/config/preview:/config/preview
+  #   depends_on:
+  #     - ogmios  # Ensure Ogmios starts before Kupo
