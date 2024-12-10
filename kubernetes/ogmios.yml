@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ogmios
+  namespace: adrian-platform-24-1-x
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ogmios
+  template:
+    metadata:
+      labels:
+        app: ogmios
+    spec:
+      containers:
+      - name: ogmios
+        image: cardanosolutions/ogmios:v6.8.0
+        ports:
+        - containerPort: 1337
+        volumeMounts:
+        - name: ogmios-data
+          mountPath: /data
+      volumes:
+      - name: ogmios-data
+        persistentVolumeClaim:
+          claimName: ogmios-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ogmios
+  namespace: adrian-platform-24-1-x
+spec:
+  ports:
+  - port: 1337
+    targetPort: 1337
+  selector:
+    app: ogmios

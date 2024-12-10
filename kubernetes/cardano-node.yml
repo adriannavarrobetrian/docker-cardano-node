@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: adrian-platform-24-1-x
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cardano-node-bp
+  namespace: adrian-platform-24-1-x
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cardano-node-bp
+  template:
+    metadata:
+      labels:
+        app: cardano-node-bp
+    spec:
+      containers:
+      - name: cardano-node-bp
+        image: ghcr.io/blinklabs-io/cardano-node
+        ports:
+        - containerPort: 3001
+        - containerPort: 12798
+        env:
+        - name: CARDANO_NETWORK
+          value: "preview"
+        - name: RESTORE_SNAPSHOT
+          value: "true"
+        - name: CARDANO_BLOCK_PRODUCER
+          value: "true"
+        volumeMounts:
+        - name: node-db
+          mountPath: /opt/cardano/data
+        - name: ipc
+          mountPath: /opt/cardano/ipc
+        - name: config
+          mountPath: /opt/cardano/config
+      volumes:
+      - name: node-db
+        persistentVolumeClaim:
+          claimName: cardano-data
+      - name: ipc
+        emptyDir: {}
+      - name: config
+        hostPath:
+          path: /home/ubuntu/docker-cardano-node/config

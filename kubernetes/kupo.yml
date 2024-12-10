@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kupo
+  namespace: adrian-platform-24-1-x
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kupo
+  template:
+    metadata:
+      labels:
+        app: kupo
+    spec:
+      containers:
+      - name: kupo
+        image: cardanosolutions/kupo:v2.9.0
+        ports:
+        - containerPort: 1442
+        env:
+        - name: OGMIOS_HOST
+          value: "ogmios"
+        - name: OGMIOS_PORT
+          value: "1337"
+        volumeMounts:
+        - name: kupo-data
+          mountPath: /db
+      volumes:
+      - name: kupo-data
+        persistentVolumeClaim:
+          claimName: kupo-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kupo
+  namespace: adrian-platform-24-1-x
+spec:
+  ports:
+  - port: 1442
+    targetPort: 1442
+  selector:
+    app: kupo
