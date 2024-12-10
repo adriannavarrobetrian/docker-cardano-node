@@ -1,8 +1,3 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: adrian-platform-24-1-x
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,20 +25,30 @@ spec:
         - name: RESTORE_SNAPSHOT
           value: "true"
         - name: CARDANO_BLOCK_PRODUCER
-          value: "true"
-        volumeMounts:
-        - name: node-db
-          mountPath: /opt/cardano/data
-        - name: ipc
-          mountPath: /opt/cardano/ipc
-        - name: config
-          mountPath: /opt/cardano/config
-      volumes:
-      - name: node-db
-        persistentVolumeClaim:
-          claimName: cardano-data
-      - name: ipc
-        emptyDir: {}
-      - name: config
-        hostPath:
-          path: /home/ubuntu/docker-cardano-node/config
+          value: "false"
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        args: ["run"]      
+
+        # volumeMounts:
+        # - name: node-db
+        #   mountPath: /opt/cardano/data
+
+      #   - name: ipc
+      #     mountPath: /opt/cardano/ipc
+      #   - name: config
+      #     mountPath: /opt/cardano/config
+      # volumes:
+      # - name: node-db
+      #   persistentVolumeClaim:
+      #     claimName: cardano-data
+      # - name: ipc
+      #   emptyDir: {}
+      # - name: config
+      #   hostPath:
+      #     path: /home/ubuntu/docker-cardano-node/config
