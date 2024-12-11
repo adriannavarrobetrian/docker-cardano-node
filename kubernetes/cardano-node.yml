@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cardano-node-bp
-  namespace: adrian-platform-24-1-x
+  name: test-node-bp
+  namespace: platform-23-3-0
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cardano-node-bp
+      app: test-node-bp
   template:
     metadata:
       labels:
-        app: cardano-node-bp
+        app: test-node-bp
     spec:
       containers:
-      - name: cardano-node-bp
+      - name: test-node-bp
         image: ghcr.io/blinklabs-io/cardano-node
         ports:
         - containerPort: 3001
@@ -23,7 +23,7 @@ spec:
         - name: CARDANO_NETWORK
           value: "preview"
         - name: RESTORE_SNAPSHOT
-          value: "true"
+          value: "false"
         - name: CARDANO_BLOCK_PRODUCER
           value: "false"
         resources:
@@ -33,22 +33,16 @@ spec:
           requests:
             memory: "256Mi"
             cpu: "250m"
-        args: ["run"]      
-
-        # volumeMounts:
-        # - name: node-db
-        #   mountPath: /opt/cardano/data
-
-      #   - name: ipc
-      #     mountPath: /opt/cardano/ipc
-      #   - name: config
-      #     mountPath: /opt/cardano/config
-      # volumes:
-      # - name: node-db
-      #   persistentVolumeClaim:
-      #     claimName: cardano-data
-      # - name: ipc
-      #   emptyDir: {}
-      # - name: config
-      #   hostPath:
-      #     path: /home/ubuntu/docker-cardano-node/config
+        args: ["run"]
+        volumeMounts:
+        - name: efs-volume
+          mountPath: /opt/cardano/config
+          subPath: config  # Map to the "config" folder in the EFS mount
+        - name: efs-volume
+          mountPath: /opt/cardano/data
+          subPath: data  # Map to the "data" folder in the EFS mount
+      volumes:
+      - name: efs-volume
+        hostPath:
+          path: /mnt/efs  # Root EFS mount
+          type: Directory

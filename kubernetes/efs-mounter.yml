@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: efs-mounter
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: efs-mounter
+  template:
+    metadata:
+      labels:
+        app: efs-mounter
+    spec:
+      containers:
+      - name: efs-mounter
+        image: amazonlinux:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          yum install -y nfs-utils &&
+          mkdir -p /mnt/efs &&
+          mount -t nfs4 -o nfsvers=4.1 fs-08a9835fd0638f578.efs.eu-west-2.amazonaws.com:/ /mnt/efs &&
+          while true; do sleep 30; done
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: host-mount
+          mountPath: /mnt/efs
+      volumes:
+      - name: host-mount
+        hostPath:
+          path: /mnt/efs
+          type: DirectoryOrCreate
+      nodeSelector: {}
+      tolerations:
+      - operator: Exists
