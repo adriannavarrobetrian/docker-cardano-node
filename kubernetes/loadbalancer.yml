@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-node-bp-service
+  namespace: platform-23-3-0
+spec:
+  type: LoadBalancer
+  selector:
+    app: test-node-bp
+  ports:
+    - protocol: TCP
+      port: 3001        # External port
+      targetPort: 3001  # Container port
+      name: http        # Unique name for the port
+    - protocol: TCP
+      port: 12798       # External port
+      targetPort: 12798 # Container port
+      name: metrics     # Unique name for the port
