@@ -20,6 +20,8 @@ spec:
         - containerPort: 3001
         - containerPort: 12798
         env:
+        - name: GENESIS_VERIFICATION_KEY
+          value: "/opt/cardano/config/preview/genesis.vkey"
         - name: CARDANO_NETWORK
           value: "preview"
         - name: RESTORE_SNAPSHOT
