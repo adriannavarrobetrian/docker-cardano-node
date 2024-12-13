@@ -73,8 +73,8 @@ command output: 12D3KooWBf66nFnBRV8y6zAKzgFiZCDypoe1Tmt7Dm8qfhWgmpYt
 
 cardano-cli conway query leadership-schedule \
 --testnet-magic 2 \
---genesis ../shelley-genesis.json \
---stake-pool-id $(cat stakepoolid.txt) \
---vrf-signing-key-file vrf.skey \
---socket-path /opt/cardano/ipc/socket \
+--genesis /opt/cardano/config/preview/shelley-genesis.json \
+--stake-pool-id $(cat /opt/cardano/config/preview//keys/stakepoolid.txt) \
+--vrf-signing-key-file /opt/cardano/config/preview//keys/vrf.skey \
+--socket-path /opt/cardano/ipc/node.socket \
 --current

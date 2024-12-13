@@ -11,8 +11,8 @@ spec:
     - protocol: TCP
       port: 3001        # External port
       targetPort: 3001  # Container port
-      name: http        # Unique name for the port
-    - protocol: TCP
-      port: 12798       # External port
-      targetPort: 12798 # Container port
-      name: metrics     # Unique name for the port
+      name: puerto        # Unique name for the port
+    # - protocol: TCP
+    #   port: 12798       # External port
+    #   targetPort: 12798 # Container port
+    #   name: metrics     # Unique name for the port

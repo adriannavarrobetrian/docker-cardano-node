@@ -18,16 +18,25 @@ spec:
         image: ghcr.io/blinklabs-io/cardano-node
         ports:
         - containerPort: 3001
-        - containerPort: 12798
+        #- containerPort: 12798
         env:
         - name: GENESIS_VERIFICATION_KEY
           value: "/opt/cardano/config/preview/genesis.vkey"
+        - name: CARDANO_SOCKET_PATH
+          value: "/opt/cardano/ipc/node.socket"
+        - name: CARDANO_SHELLEY_KES_KEY
+          value: "/opt/cardano/config/preview/keys/kes.skey"
+        - name: CARDANO_SHELLEY_OPERATIONAL_CERTIFICATE
+          value: "/opt/cardano/config/preview/keys/node.cert"
+        - name: CARDANO_SHELLEY_VRF_KEY 
+          value: "/opt/cardano/config/preview/keys/vrf.skey"
+
         - name: CARDANO_NETWORK
           value: "preview"
         - name: RESTORE_SNAPSHOT
           value: "false"
         - name: CARDANO_BLOCK_PRODUCER
-          value: "false"
+          value: "true"
         resources:
           limits:
             memory: "4Gi"  # Set memory limit to 4GB
@@ -43,6 +52,10 @@ spec:
         - name: efs-volume
           mountPath: /opt/cardano/data
           subPath: data  # Map to the "data" folder in the EFS mount
+        - name: efs-volume
+          mountPath: /opt/cardano/ipc
+          subPath: ipc  # Map to the "data" folder in the EFS mount
+
       volumes:
       - name: efs-volume
         hostPath:
