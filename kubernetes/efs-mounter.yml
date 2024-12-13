@@ -21,7 +21,7 @@ spec:
         - |
           yum install -y nfs-utils &&
           mkdir -p /mnt/efs &&
-          mount -t nfs4 -o nfsvers=4.1 fs-08a9835fd0638f578.efs.eu-west-2.amazonaws.com:/ /mnt/efs &&
+          mount -t efs -o tls fs-08a9835fd0638f578:/ /mnt/efs &&
           while true; do sleep 30; done
         securityContext:
           privileged: true
