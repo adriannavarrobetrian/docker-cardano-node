@@ -30,11 +30,11 @@ spec:
           value: "false"
         resources:
           limits:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: "4Gi"  # Set memory limit to 4GB
+            cpu: "1.5"       # Set CPU limit to 2 cores
           requests:
-            memory: "256Mi"
-            cpu: "250m"
+            memory: "1Gi"  # Retain current memory request
+            cpu: "500m"      # Adjust CPU request as needed
         args: ["run"]
         volumeMounts:
         - name: efs-volume
