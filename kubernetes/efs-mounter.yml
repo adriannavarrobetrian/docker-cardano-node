@@ -20,7 +20,7 @@ spec:
         - -c
         - |
           yum install -y nfs-utils &&
-          mkdir -p /mnt/efs &&
+          mkdir -p /mnt/efs && mkdir -p /mnt/efslocal &&
           mount -t efs -o tls fs-08a9835fd0638f578:/ /mnt/efs &&
           while true; do sleep 30; done
         securityContext:
