@@ -13,6 +13,8 @@ spec:
       labels:
         app: test-node-bp
     spec:
+      nodeSelector:
+        dedicated: test-node 
       containers:
       - name: test-node-bp
         image: ghcr.io/blinklabs-io/cardano-node
