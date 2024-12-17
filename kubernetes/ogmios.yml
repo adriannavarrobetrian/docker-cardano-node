@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ogmios
-  namespace: adrian-platform-24-1-x
 spec:
   replicas: 1
   selector:
@@ -13,27 +12,58 @@ spec:
       labels:
         app: ogmios
     spec:
+      nodeSelector:
+        dedicated: test-node 
       containers:
-      - name: ogmios
-        image: cardanosolutions/ogmios:v6.8.0
-        ports:
-        - containerPort: 1337
-        volumeMounts:
-        - name: ogmios-data
-          mountPath: /data
+        - name: ogmios
+          image: cardanosolutions/ogmios:v6.8.0
+          ports:
+            - containerPort: 1337
+          env:
+            - name: DATA_DIR
+              value: "/data"
+          args:
+            - --node-socket
+            - /ipc/node.socket
+            - --node-config
+            - /config/preview/cardano-node/config.json
+            - --host
+            - 0.0.0.0
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+          volumeMounts:
+            - name: ogmios-config
+              mountPath: /config/preview/cardano-node
+              subPath: config/preview
+            - name: ogmios-data
+              mountPath: /data
+            - name: ipc-volume
+              mountPath: /ipc
+              subPath: ipc
       volumes:
-      - name: ogmios-data
-        persistentVolumeClaim:
-          claimName: ogmios-data
+        - name: ogmios-data
+          hostPath:
+            path: /mnt/data/ogmios-data
+        - name: ipc-volume
+          hostPath:
+            path: /mnt/efslocal
+        - name: ogmios-config
+          hostPath:
+            path: /mnt/efslocal
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: ogmios
-  namespace: adrian-platform-24-1-x
 spec:
-  ports:
-  - port: 1337
-    targetPort: 1337
   selector:
     app: ogmios
+  ports:
+    - protocol: TCP
+      port: 1337
+      targetPort: 1337

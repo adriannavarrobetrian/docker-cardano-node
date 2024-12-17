@@ -41,7 +41,7 @@ spec:
           value: "true"
         resources:
           limits:
-            memory: "4Gi"  # Set memory limit to 4GB
+            memory: "7Gi"  # Set memory limit to 4GB
             cpu: "1.5"       # Set CPU limit to 2 cores
           requests:
             memory: "1Gi"  # Retain current memory request

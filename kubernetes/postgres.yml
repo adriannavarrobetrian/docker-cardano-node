@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
-  namespace: adrian-platform-24-1-x
 spec:
   replicas: 1
   selector:
@@ -14,31 +13,38 @@ spec:
         app: postgres
     spec:
       containers:
-      - name: postgres
-        image: postgres:15.5
-        ports:
-        - containerPort: 5432
-        env:
-        - name: POSTGRES_PASSWORD
-          value: password123
-        - name: POSTGRES_DB
-          value: cexplorer
-        volumeMounts:
-        - name: postgres-data
-          mountPath: /var/lib/postgresql/data
+        - name: postgres
+          image: postgres:15.5
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: "4sJHMjjEAGEi"
+            - name: POSTGRES_DB
+              value: "cexplorer"
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
       volumes:
-      - name: postgres-data
-        persistentVolumeClaim:
-          claimName: postgres-data
+        - name: postgres-data
+          hostPath:
+            path: /mnt/data/postgres-data
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: postgres
-  namespace: adrian-platform-24-1-x
 spec:
-  ports:
-  - port: 5432
-    targetPort: 5432
   selector:
     app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432

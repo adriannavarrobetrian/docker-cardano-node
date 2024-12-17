@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: db-sync
-  namespace: adrian-platform-24-1-x
 spec:
   replicas: 1
   selector:
@@ -13,26 +12,42 @@ spec:
       labels:
         app: db-sync
     spec:
+      nodeSelector:
+        dedicated: test-node
       containers:
-      - name: db-sync
-        image: ghcr.io/intersectmbo/cardano-db-sync:13.5.0.2
-        env:
-        - name: NETWORK
-          value: "preview"
-        - name: POSTGRES_HOST
-          value: "postgres"
-        - name: POSTGRES_PORT
-          value: "5432"
-        - name: POSTGRES_DB
-          value: "cexplorer"
-        - name: POSTGRES_USER
-          value: "postgres"
-        - name: POSTGRES_PASSWORD
-          value: "password123"
-        volumeMounts:
-        - name: db-sync-data
-          mountPath: /var/lib
+        - name: db-sync
+          image: ghcr.io/intersectmbo/cardano-db-sync:13.5.0.2
+          env:
+            - name: NETWORK
+              value: "preview"
+            - name: POSTGRES_HOST
+              value: "postgres"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_DB
+              value: "cexplorer"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "4sJHMjjEAGEi"
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+          volumeMounts:
+            - name: db-sync-data
+              mountPath: /var/lib
+            - name: ipc-volume
+              mountPath: /node-ipc
+              subPath: ipc
       volumes:
-      - name: db-sync-data
-        persistentVolumeClaim:
-          claimName: db-sync-data
+        - name: ipc-volume
+          hostPath:
+            path: /mnt/efslocal  # Same EFS path as cardano-node
+            type: Directory
+        - name: db-sync-data
+          hostPath:
+            path: /mnt/data/db-sync-data

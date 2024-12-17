@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kupo
-  namespace: adrian-platform-24-1-x
 spec:
   replicas: 1
   selector:
@@ -13,32 +12,60 @@ spec:
       labels:
         app: kupo
     spec:
+      nodeSelector:
+        dedicated: test-node 
       containers:
-      - name: kupo
-        image: cardanosolutions/kupo:v2.9.0
-        ports:
-        - containerPort: 1442
-        env:
-        - name: OGMIOS_HOST
-          value: "ogmios"
-        - name: OGMIOS_PORT
-          value: "1337"
-        volumeMounts:
-        - name: kupo-data
-          mountPath: /db
+        - name: kupo
+          image: cardanosolutions/kupo:v2.9.0
+          args:
+            - "--node-socket"
+            - "/ipc/node.socket"
+            - "--node-config"
+            - "/config/cardano-node/config.json"
+            - "--host"
+            - "0.0.0.0"
+            - "--workdir"
+            - "/db"
+            - --match
+            - "*"
+            - --since
+            - "origin"
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+          ports:
+            - containerPort: 1442
+          volumeMounts:
+            - name: kupo-data
+              mountPath: /db
+            - name: ipc-volume
+              mountPath: /ipc
+            - name: kupo-config
+              mountPath: /config/cardano-node
+              subPath: config/preview
       volumes:
-      - name: kupo-data
-        persistentVolumeClaim:
-          claimName: kupo-data
+        - name: kupo-data
+          hostPath:
+            path: /mnt/data/kupo-data
+        - name: ipc-volume
+          hostPath:
+            path: /mnt/efslocal/ipc
+        - name: kupo-config
+          hostPath:
+            path: /mnt/efslocal
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: kupo
-  namespace: adrian-platform-24-1-x
 spec:
-  ports:
-  - port: 1442
-    targetPort: 1442
   selector:
     app: kupo
+  ports:
+    - protocol: TCP
+      port: 1442
+      targetPort: 1442
